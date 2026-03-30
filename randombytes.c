@@ -1,16 +1,21 @@
+#if defined(__linux__) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include "randombytes.h"
 
-#ifdef _WIN32
+#if defined(STM32F4xx) || defined(STM32F407xx) || defined(STM32F4xx_HAL_H)
+#include "stm32f4xx_hal.h"
+#elif defined(_WIN32)
 #include <windows.h>
 #include <wincrypt.h>
 #else
 #include <fcntl.h>
 #include <errno.h>
 #ifdef __linux__
-#define _GNU_SOURCE
 #include <unistd.h>
 #include <sys/syscall.h>
 #else
@@ -18,7 +23,28 @@
 #endif
 #endif
 
-#ifdef _WIN32
+#if defined(STM32F4xx) || defined(STM32F407xx) || defined(STM32F4xx_HAL_H)
+extern RNG_HandleTypeDef hrng;
+
+void randombytes(uint8_t *out, size_t outlen) {
+  uint32_t random_word = 0;
+  size_t idx = 0;
+  HAL_StatusTypeDef status;
+
+  while(idx < outlen) {
+    status = HAL_RNG_GenerateRandomNumber(&hrng, &random_word);
+    if(status != HAL_OK) {
+      while(1) {
+      }
+    }
+
+    out[idx++] = (uint8_t)(random_word & 0xFFu);
+    if(idx < outlen) out[idx++] = (uint8_t)((random_word >> 8) & 0xFFu);
+    if(idx < outlen) out[idx++] = (uint8_t)((random_word >> 16) & 0xFFu);
+    if(idx < outlen) out[idx++] = (uint8_t)((random_word >> 24) & 0xFFu);
+  }
+}
+#elif defined(_WIN32)
 void randombytes(uint8_t *out, size_t outlen) {
   HCRYPTPROV ctx;
   DWORD len;
