@@ -2,7 +2,7 @@
 #include <stddef.h>
 
 #include "api.h"
-#include "rng.h"
+#include "randombytes.h"
 #include "test_sign.h"
 
 #define TEST_ITERATIONS 5000
@@ -15,7 +15,6 @@ int run_random_keygen_sign_5000(test_result_t *result)
     static uint8_t msg[MSG_LEN];
     static uint8_t sm[CRYPTO_BYTES + MSG_LEN];
 
-    uint8_t entropy_input[48];
     unsigned long long smlen = 0;
     uint32_t i;
     int ret;
@@ -28,11 +27,6 @@ int run_random_keygen_sign_5000(test_result_t *result)
     result->keygen_fail = 0;
     result->sign_success = 0;
     result->sign_fail = 0;
-
-    for (i = 0; i < 48; i++) {
-        entropy_input[i] = (uint8_t)i;
-    }
-    randombytes_init(entropy_input, NULL, 256);
 
     for (i = 0; i < TEST_ITERATIONS; i++) {
         randombytes(msg, MSG_LEN);
